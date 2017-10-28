@@ -1,0 +1,8 @@
+[0mGET /config [32m200 [0m11.302 ms - 123[0m
+[0mPOST /registration/123123123123v [32m200 [0m766.107 ms - 4[0m
+[0mGET /config [32m200 [0m0.692 ms - 123[0m
+[0mPOST /registration/123123123123v [32m200 [0m574.790 ms - 4[0m
+[0mPOST /registration [32m200 [0m126.333 ms - 2048[0m
+[0mGET /config [32m200 [0m0.597 ms - 123[0m
+[0mPOST /registration/123123123123v [32m200 [0m625.627 ms - 2048[0m
+[0mPATCH /registration/123123123123v [32m200 [0m73.869 ms - 2048[0m
