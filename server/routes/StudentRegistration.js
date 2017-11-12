@@ -23,4 +23,8 @@ router.route('/:hash/info')
 router.route('/payment/36053764d32fa15450a622dab4ac3b4b')
 .post(StudentRegistrationController.paymentComplete)
 
+router.route('/admission')
+// Create new student route.
+.get(StudentRegistrationController.downloadAdmissionCard);
+
 module.exports = router;

@@ -1,6 +1,12 @@
 const request = require('request');
 const moment = require('moment');
 const md5 = require('md5');
+const fs = require('fs');
+const path = require('path');
+const blobStream = require('blob-stream');
+const Blob = require('blob');
+const PDFDocument = require('pdfkit');
+const pdf = require('pdf-write-page');
 
 const {
     StudentModel,
@@ -516,7 +522,7 @@ const studenPaymentComplete = async (hash, transactionId, amount, timestamp) => 
         registration_payment_status: "FULL",
         payment_transaction_id: transactionId,
         registration_payment_date: timestamp,
-        payment_amount:amount
+        payment_amount: amount
 
     });
 
@@ -642,6 +648,74 @@ module.exports = {
         try {
             const student = await getStudentFromHash(req.params.hash);
             res.status(200).json(student);
+        } catch (err) {
+
+            // Log any errors!
+            console.log(err)
+
+            // Send To Error Handler
+            next({ status: 500, err });
+        }
+    },
+    downloadAdmissionCard: async (req, res, next) => {
+        try {
+
+            const degPref = req.query.degPref;
+            const name = req.query.name;
+            const nic = req.query.nic;
+
+            if (!degPref || !nic || !name) {
+                throw new Error("defPref, name and nic must be providede. Please check request");
+            }
+
+            var pdfPath = path.join(__dirname, `/../../public/assets/admission_forms_2017_2018/Aptitude_Test_Admistion_Card_${degPref}_2017-2018.pdf`);
+
+
+            if(degPref == "MCS") {
+            pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
+                        .cfg({ size: 13 })
+                        .write(200, 402, nic)
+                        .write(200, 621, name)
+                        .write(363, 267, nic)
+                        .end();
+            } else if (degPref == "MIS"){
+                pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
+                        .cfg({ size: 13 })
+                        .write(200, 385, nic)
+                        .write(200, 621, name)
+                        .write(363, 257, nic)
+                        .end();
+            } else if (degPref == "MIT"){
+                pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
+                        .cfg({ size: 13 })
+                        .write(200, 385, nic)
+                        .write(200, 621, name)
+                        .write(363, 257, nic)
+                        .end();
+            }
+
+            fs.readFile(`admission_cards/${nic}_${degPref}.pdf`, function (err, content) {
+                if (err) {
+                    res.writeHead(404, {
+                        "Content-Type": "text/plain; charset=UTF-8"
+                    });
+                    res.write("Admission Card Not Found!");
+                    res.end();
+                }
+                else {
+
+                    res.writeHead(200,
+                            {
+                                "Content-Type": 'application/pdf',
+                                'Content-Disposition': 'inline; filename=admission_card.pdf'
+                            });
+                    res.write(content);
+                    res.end();
+                }
+            });
+
+
+
         } catch (err) {
 
             // Log any errors!

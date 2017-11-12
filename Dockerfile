@@ -2,6 +2,7 @@ FROM node:8-alpine
 WORKDIR /src
 
 COPY package.json .
+ADD server ./admission_cards
 ADD server ./server
 ADD public ./public
 RUN npm install --production
