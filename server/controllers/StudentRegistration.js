@@ -574,8 +574,14 @@ module.exports = {
                 // 4. Capcha is valid. Get Student from nic.
                 const student = await getRegisteredStudent(req.params.nic)
 
+                if (!student && moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
+                res.status(401).json({"message": "CLOSED"});
+            } else {
+
                 // 5. Send student in response.
                 res.status(200).json(student);
+            }
+            
             });
 
         } catch (err) {
@@ -590,8 +596,13 @@ module.exports = {
     newStudent: async (req, res, next) => {
 
         try {
-            const student = await createNewStudentAtRegistration(req);
-            res.status(200).json(student);
+
+            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
+                res.status(401).json({"message": "CLOSED"});
+            } else {
+                const student = await createNewStudentAtRegistration(req);
+                res.status(200).json(student);
+            }
         } catch (err) {
 
             // Log any errors!
@@ -605,8 +616,12 @@ module.exports = {
     updateStudent: async (req, res, next) => {
 
         try {
+            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
+                res.status(401).json({"message": "CLOSED"});
+            } else {
             const student = await updateStudentAtRegistration(req);
             res.status(200).json(student);
+            }
         } catch (err) {
 
             // Log any errors!
@@ -619,8 +634,12 @@ module.exports = {
     confirmStudent: async (req, res, next) => {
 
         try {
+            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
+                res.status(401).json({"message": "CLOSED"});
+            } else {
             const student = await confirmStudent(req);
             res.status(200).json(student);
+            }
         } catch (err) {
 
             // Log any errors!

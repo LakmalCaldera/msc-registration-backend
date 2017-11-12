@@ -7,7 +7,7 @@
     "SECRET_KEY": "6LfpvzIUAAAAAM4YiSbQwpSJD8Yz_zN2dhRUPjUX",
     "ENCRYPT_KEY": "SomethingRandomThatNoOneKnowsOf:)",
     "OPENING_DATE": "01/01/2017",
-    "CLOSING_DATE": "01/12/2017",
+    "CLOSING_DATE": "20/11/2017",
     "PGW_PROTOCOL": "http",
     "PGW_HOST": "10.2.2.150", 
     "PGW_PORT": "8080"
