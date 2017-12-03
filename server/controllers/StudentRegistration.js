@@ -478,9 +478,12 @@ const confirmStudent = async (req) => {
     });
 
     await student.update({
-        confirmed: true
+        confirmed: true,
+        application_id: null
     });
 
+    const studentUpdateController = require('./../dbUpdates/Students');
+    studentUpdateController.generateReferenceNumbers()
     return student;
 }
 
@@ -549,6 +552,21 @@ const getStudentFromHash = async (hash) => {
     return student
 };
 
+const getStudentFromNic = async (nic) => {
+    const student = await StudentModel.findOne({
+        where: {
+            national_id_or_passport: nic,
+            year: {
+                $gte: new Date().getFullYear()
+            }
+        },
+        include: [
+            { model: StudentMasterModel, as: 'student_master' }
+        ]
+    });
+    return student
+};
+
 module.exports = {
     getStudent: async (req, res, next) => {
 
@@ -574,14 +592,14 @@ module.exports = {
                 // 4. Capcha is valid. Get Student from nic.
                 const student = await getRegisteredStudent(req.params.nic)
 
-                if (!student && moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
-                res.status(401).json({"message": "CLOSED"});
-            } else {
+                if (!student && moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()) {
+                    res.status(401).json({ "message": "CLOSED" });
+                } else {
 
-                // 5. Send student in response.
-                res.status(200).json(student);
-            }
-            
+                    // 5. Send student in response.
+                    res.status(200).json(student);
+                }
+
             });
 
         } catch (err) {
@@ -597,8 +615,8 @@ module.exports = {
 
         try {
 
-            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
-                res.status(401).json({"message": "CLOSED"});
+            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()) {
+                res.status(401).json({ "message": "CLOSED" });
             } else {
                 const student = await createNewStudentAtRegistration(req);
                 res.status(200).json(student);
@@ -616,12 +634,8 @@ module.exports = {
     updateStudent: async (req, res, next) => {
 
         try {
-            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
-                res.status(401).json({"message": "CLOSED"});
-            } else {
             const student = await updateStudentAtRegistration(req);
             res.status(200).json(student);
-            }
         } catch (err) {
 
             // Log any errors!
@@ -634,12 +648,8 @@ module.exports = {
     confirmStudent: async (req, res, next) => {
 
         try {
-            if (moment().unix() > moment(process.env.CLOSING_DATE, "DD/MM/YYYY").unix()){
-                res.status(401).json({"message": "CLOSED"});
-            } else {
             const student = await confirmStudent(req);
             res.status(200).json(student);
-            }
         } catch (err) {
 
             // Log any errors!
@@ -679,38 +689,56 @@ module.exports = {
     downloadAdmissionCard: async (req, res, next) => {
         try {
 
-            const degPref = req.query.degPref;
-            const name = req.query.name;
+            
             const nic = req.query.nic;
 
-            if (!degPref || !nic || !name) {
-                throw new Error("defPref, name and nic must be providede. Please check request");
+            const student = await getStudentFromNic(req.query.nic);
+
+            const degPref = student.student_master.first_degree_preference;
+
+            if (!student.confirmed || !(student.student_master.registration_payment_status && student.student_master.registration_payment_status.toLowerCase() == 'full') && student.deffered) {
+                throw new Error("No Authorization to download admission card.")
+            }
+
+
+            if (!degPref || !nic) {
+                throw new Error("nic must be provided. Please check request");
             }
 
             var pdfPath = path.join(__dirname, `/../../public/assets/admission_forms_2017_2018/Aptitude_Test_Admistion_Card_${degPref}_2017-2018.pdf`);
 
 
-            if(degPref == "MCS") {
-            pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
-                        .cfg({ size: 13 })
-                        .write(200, 402, nic)
-                        .write(200, 621, name)
-                        .write(363, 267, nic)
-                        .end();
-            } else if (degPref == "MIS"){
+            if (degPref == "MCS") {
                 pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
-                        .cfg({ size: 13 })
-                        .write(200, 385, nic)
-                        .write(200, 621, name)
-                        .write(363, 257, nic)
-                        .end();
-            } else if (degPref == "MIT"){
+                    .cfg({ size: 12 })
+                    .write(210, 385, nic)
+                    .write(217, 560, student.application_id)
+                    .write(217, 621, student.full_name)
+                    .write(420, 285, moment().format('Do MMMM YYYY'))
+                    .end();
+            } else if (degPref == "MIS") {
                 pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
-                        .cfg({ size: 13 })
-                        .write(200, 385, nic)
-                        .write(200, 621, name)
-                        .write(363, 257, nic)
-                        .end();
+                    .cfg({ size: 12 })
+                    .write(210, 395, nic)
+                    .write(217, 560, student.application_id)
+                    .write(217, 621, student.full_name)
+                    .write(420, 285, moment().format('Do MMMM YYYY'))
+                    .end();
+            } else if (degPref == "MIT") {
+
+                if(student.application_id <= 17550139) {
+                    pdfPath = path.join(__dirname, `/../../public/assets/admission_forms_2017_2018/Aptitude_Test_Admistion_Card_${degPref}_2017-2018-Batch-1.pdf`);
+                } else {
+                    pdfPath = path.join(__dirname, `/../../public/assets/admission_forms_2017_2018/Aptitude_Test_Admistion_Card_${degPref}_2017-2018-Batch-2.pdf`);
+                }
+
+                pdf({ in: pdfPath, out: `admission_cards/${nic}_${degPref}.pdf`, pageNumber: 0 })
+                    .cfg({ size: 12 })
+                    .write(210, 395, nic)
+                    .write(217, 560, student.application_id)
+                    .write(217, 621, student.full_name)
+                    .write(420, 285, moment().format('Do MMMM YYYY'))
+                    .end();
             }
 
             fs.readFile(`admission_cards/${nic}_${degPref}.pdf`, function (err, content) {
@@ -724,10 +752,10 @@ module.exports = {
                 else {
 
                     res.writeHead(200,
-                            {
-                                "Content-Type": 'application/pdf',
-                                'Content-Disposition': 'inline; filename=admission_card.pdf'
-                            });
+                        {
+                            "Content-Type": 'application/pdf',
+                            'Content-Disposition': 'inline; filename=admission_card.pdf'
+                        });
                     res.write(content);
                     res.end();
                 }

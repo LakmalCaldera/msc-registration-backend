@@ -10,6 +10,7 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.EXPRESS_SERVER_PORT;
 
+const studentUpdateController = require('./dbUpdates/Students');
 const studentRegistrationRoutes = require('./routes/StudentRegistration');
 const systemConfigRoutes = require('./routes/SystemConfig');
 
@@ -34,6 +35,18 @@ app.get('*', function (req, res) {
 // Setup Db
 mysqlConnector.sync({force: false}).then(() => {
 	console.log("MysqlDb is now ready!");
+	mysqlConnector.query("SELECT @@sql_mode;").then((data) => {
+		console.log(data)
+		mysqlConnector.query("SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));").then((data) => {
+			mysqlConnector.query("SELECT @@sql_mode;").then((data) => {
+				console.log(data)
+				studentUpdateController.updateInvalidData()
+				studentUpdateController.generateReferenceNumbers()
+				// TODO -  Remove this next line in the next iteration
+				studentUpdateController.syncIndexNumbers()
+			});
+		})
+	})
 }).catch((err) => {
 	console.log(`An Error occured while trying to create the models.\n ${err}`);
 });
