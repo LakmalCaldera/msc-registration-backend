@@ -696,7 +696,7 @@ module.exports = {
 
             const degPref = student.student_master.first_degree_preference;
 
-            if (!student.confirmed || !(student.student_master.registration_payment_status && student.student_master.registration_payment_status.toLowerCase() == 'full') && student.deffered) {
+            if (!student.confirmed || !(student.student_master.registration_payment_status && student.student_master.registration_payment_status.toLowerCase() == 'full') || student.deffered) {
                 throw new Error("No Authorization to download admission card.")
             }
 
@@ -714,6 +714,7 @@ module.exports = {
                     .write(210, 385, nic)
                     .write(217, 560, student.application_id)
                     .write(217, 621, student.full_name)
+                    .write(217, 600, `(${student.name_with_initial})`)
                     .write(420, 285, moment().format('Do MMMM YYYY'))
                     .end();
             } else if (degPref == "MIS") {
@@ -722,6 +723,7 @@ module.exports = {
                     .write(210, 395, nic)
                     .write(217, 560, student.application_id)
                     .write(217, 621, student.full_name)
+                    .write(217, 600, `(${student.name_with_initial})`)
                     .write(420, 285, moment().format('Do MMMM YYYY'))
                     .end();
             } else if (degPref == "MIT") {
@@ -737,6 +739,7 @@ module.exports = {
                     .write(210, 395, nic)
                     .write(217, 560, student.application_id)
                     .write(217, 621, student.full_name)
+                    .write(217, 600, `(${student.name_with_initial})`)
                     .write(420, 285, moment().format('Do MMMM YYYY'))
                     .end();
             }

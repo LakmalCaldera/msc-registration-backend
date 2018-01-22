@@ -35,23 +35,27 @@ app.get('*', function (req, res) {
 // Setup Db
 mysqlConnector.sync({force: false}).then(() => {
 	console.log("MysqlDb is now ready!");
-	mysqlConnector.query("SELECT @@sql_mode;").then((data) => {
-		console.log(data)
-		mysqlConnector.query("SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));").then((data) => {
-			mysqlConnector.query("SELECT @@sql_mode;").then((data) => {
-				console.log(data)
-				studentUpdateController.updateInvalidData()
-				studentUpdateController.generateReferenceNumbers()
-				// TODO -  Remove this next line in the next iteration
-				studentUpdateController.syncIndexNumbers()
-			});
-		})
-	})
+	// mysqlConnector.query("SELECT @@sql_mode;").then((data) => {
+	// 	console.log(data)
+	// 	mysqlConnector.query("SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));").then((data) => {
+	// 		mysqlConnector.query("SELECT @@sql_mode;").then((data) => {
+	// 			console.log(data)
+	// 			//	studentUpdateController.updateInvalidData()
+	// 			//	studentUpdateController.generateReferenceNumbers()
+	// 			//	TODO -  Remove this next line in the next iteration
+	// 			// 	studentUpdateController.syncIndexNumbers()
+	// 		});
+	// 	})
+	// })
 }).catch((err) => {
 	console.log(`An Error occured while trying to create the models.\n ${err}`);
 });
 
+
+
 // Start Express Server
-app.listen(PORT, function(){
+var server = app.listen(PORT, function(){
 	console.log(`Server started on port ${PORT}...`);
 });
+
+server.timeout = 15000;
